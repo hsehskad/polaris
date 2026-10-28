@@ -408,6 +408,15 @@ async fn what_if_tool_predicts_without_executing_or_recording() {
     let ctx = ToolContext::new().with(belief.clone());
     let registry = registry(&server);
     assert!(registry.has("simulate_action"));
+    let what_if = registry
+        .definitions()
+        .into_iter()
+        .find(|d| d.name == "simulate_action")
+        .expect("what-if definition");
+    assert!(
+        !what_if.strict,
+        "open-ended `args` needs a non-strict schema"
+    );
 
     let value = registry
         .execute_with(

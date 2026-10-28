@@ -27,7 +27,9 @@ pub(crate) struct SimulateActionTool {
 
 impl Tool for SimulateActionTool {
     fn definition(&self) -> ToolDefinition {
-        ToolDefinition::new(
+        // Not strict: `args` is an open-ended object, which strict-mode schema
+        // normalisation (`additionalProperties: false`) would reduce to `{}`.
+        let mut definition = ToolDefinition::new(
             self.name.clone(),
             self.description.clone(),
             json!({
@@ -38,7 +40,9 @@ impl Tool for SimulateActionTool {
                 },
                 "required": ["tool", "args"]
             }),
-        )
+        );
+        definition.strict = false;
+        definition
     }
 
     fn execute<'ctx>(
@@ -51,7 +55,14 @@ impl Tool for SimulateActionTool {
                 .get("tool")
                 .and_then(Value::as_str)
                 .ok_or_else(|| ToolError::parameter_error("`tool` (string) is required"))?;
-            let call_args = args.get("args").cloned().unwrap_or_else(|| json!({}));
+            // Accept the arguments as an object or as a JSON-encoded string.
+            let call_args = match args.get("args") {
+                Some(Value::String(text)) => serde_json::from_str(text).map_err(|err| {
+                    ToolError::parameter_error(format!("`args` is not valid JSON: {err}"))
+                })?,
+                Some(value) => value.clone(),
+                None => json!({}),
+            };
             let action = self
                 .engine
                 .tools
