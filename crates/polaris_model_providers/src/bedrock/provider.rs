@@ -1,6 +1,8 @@
 //! AWS Bedrock [`LlmProvider`] implementation.
 
-use super::request::{build_output_config, build_tool_config, convert_message};
+use super::request::{
+    build_inference_config, build_output_config, build_tool_config, convert_message,
+};
 use super::response::convert_response;
 use aws_sdk_bedrockruntime::Client;
 use aws_sdk_bedrockruntime::types as bedrock;
@@ -32,6 +34,7 @@ impl LlmProvider for BedrockProvider {
     ) -> Result<LlmResponse, GenerationError> {
         let tool_config = build_tool_config(&request)?;
         let output_config = build_output_config(&request)?;
+        let inference_config = build_inference_config(&request)?;
 
         // Bedrock requires tool definitions whenever tool blocks appear in
         // the message history. Surface a clear error instead of letting a
@@ -64,6 +67,7 @@ impl LlmProvider for BedrockProvider {
             .set_system(system)
             .set_tool_config(tool_config)
             .set_output_config(output_config)
+            .set_inference_config(inference_config)
             .send()
             .await
             .map_err(|err| {

@@ -743,6 +743,8 @@ mod tests {
             tool_choice: Some(ToolChoice::Auto),
             output_schema: None,
             cache: Default::default(),
+            temperature: None,
+            max_tokens: None,
         };
         // Compute each component independently to verify composition.
         let system_count = c
@@ -773,6 +775,8 @@ mod tests {
             tool_choice: None,
             output_schema: None,
             cache: Default::default(),
+            temperature: None,
+            max_tokens: None,
         };
         let msgs_count = c.count_messages("gpt-5.4", &request.messages).unwrap();
         let count = c.count_request("gpt-5.4", &request).unwrap();
@@ -796,6 +800,8 @@ mod tests {
             tool_choice: None,
             output_schema: None,
             cache: Default::default(),
+            temperature: None,
+            max_tokens: None,
         };
         let count = counter()
             .count_request("unknown-model-xyz", &request)
@@ -991,6 +997,8 @@ mod tests {
             tool_choice: None,
             output_schema: None,
             cache: Default::default(),
+            temperature: None,
+            max_tokens: None,
         };
         let err = FailingCounter
             .count_request("any-model", &request)
@@ -1031,6 +1039,8 @@ mod tests {
             tool_choice: None,
             output_schema: None,
             cache: Default::default(),
+            temperature: None,
+            max_tokens: None,
         };
 
         let inner = counter();

@@ -296,3 +296,77 @@ pub fn build_output_config(
 
     Ok(Some(output_config))
 }
+
+// -----------------------------------------------------------------------------
+// Inference configuration
+// -----------------------------------------------------------------------------
+
+/// Builds a Bedrock inference configuration from the request's sampling
+/// controls ([`LlmRequest::temperature`] and [`LlmRequest::max_tokens`]).
+///
+/// Returns `None` when neither is set, so Bedrock applies the model defaults.
+///
+/// # Errors
+///
+/// Returns [`GenerationError::InvalidRequest`] if `max_tokens` exceeds the
+/// `i32` range Bedrock accepts.
+pub fn build_inference_config(
+    request: &LlmRequest,
+) -> Result<Option<bedrock::InferenceConfiguration>, GenerationError> {
+    if request.temperature.is_none() && request.max_tokens.is_none() {
+        return Ok(None);
+    }
+
+    let max_tokens = request
+        .max_tokens
+        .map(i32::try_from)
+        .transpose()
+        .map_err(|_| {
+            GenerationError::InvalidRequest(format!(
+                "max_tokens {} exceeds the range Bedrock accepts",
+                request.max_tokens.unwrap_or_default()
+            ))
+        })?;
+
+    Ok(Some(
+        bedrock::InferenceConfiguration::builder()
+            .set_temperature(request.temperature)
+            .set_max_tokens(max_tokens)
+            .build(),
+    ))
+}
+
+#[cfg(test)]
+mod inference_config_tests {
+    use super::*;
+
+    #[test]
+    fn no_sampling_controls_yields_no_inference_config() {
+        let request = LlmRequest::default();
+        assert!(build_inference_config(&request).unwrap().is_none());
+    }
+
+    #[test]
+    fn sampling_controls_map_onto_inference_config() {
+        let request = LlmRequest {
+            temperature: Some(0.2),
+            max_tokens: Some(512),
+            ..Default::default()
+        };
+        let config = build_inference_config(&request).unwrap().unwrap();
+        assert_eq!(config.temperature(), Some(0.2));
+        assert_eq!(config.max_tokens(), Some(512));
+    }
+
+    #[test]
+    fn oversized_max_tokens_is_rejected() {
+        let request = LlmRequest {
+            max_tokens: Some(u32::MAX),
+            ..Default::default()
+        };
+        assert!(matches!(
+            build_inference_config(&request),
+            Err(GenerationError::InvalidRequest(_))
+        ));
+    }
+}

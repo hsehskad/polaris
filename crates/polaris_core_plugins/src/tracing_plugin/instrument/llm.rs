@@ -51,6 +51,8 @@ impl TracingLlmProvider {
             gen_ai.output.type = tracing::field::Empty,
             gen_ai.request.model = %model,
             gen_ai.request.stream = stream,
+            gen_ai.request.temperature = tracing::field::Empty,
+            gen_ai.request.max_tokens = tracing::field::Empty,
             gen_ai.prompt.name = tracing::field::Empty,
             gen_ai.prompt.version = tracing::field::Empty,
             gen_ai.response.finish_reasons = tracing::field::Empty,
@@ -77,6 +79,12 @@ impl TracingLlmProvider {
         }
         if let Some(endpoint) = self.inner.endpoint() {
             span.record("server.address", endpoint.as_str());
+        }
+        if let Some(temperature) = request.temperature {
+            span.record("gen_ai.request.temperature", f64::from(temperature));
+        }
+        if let Some(max_tokens) = request.max_tokens {
+            span.record("gen_ai.request.max_tokens", i64::from(max_tokens));
         }
         if let Some(name) = &request.system_prompt_name {
             span.record("gen_ai.prompt.name", name.as_str());
@@ -1115,6 +1123,35 @@ mod tests {
     }
 
     #[test]
+    fn chat_span_records_sampling_controls_when_present() {
+        let fields = capture_span_fields(|| {
+            let provider = TracingLlmProvider::new(
+                Arc::new(StubStreamProvider::new(message_stop_events())),
+                false,
+            );
+            let request = LlmRequest {
+                temperature: Some(0.5),
+                max_tokens: Some(256),
+                ..empty_request()
+            };
+            let mut stream = block_on_ready(provider.stream("test-model", request))
+                .expect("stream should be constructed");
+            drain_stream(&mut stream);
+        });
+
+        assert_eq!(
+            fields.get("gen_ai.request.temperature").map(String::as_str),
+            Some("0.5"),
+            "the request's temperature should be recorded on the chat span"
+        );
+        assert_eq!(
+            fields.get("gen_ai.request.max_tokens").map(String::as_str),
+            Some("256"),
+            "the request's max_tokens should be recorded on the chat span"
+        );
+    }
+
+    #[test]
     fn chat_span_omits_prompt_identity_when_absent() {
         let fields = capture_span_fields(|| {
             let provider = TracingLlmProvider::new(
@@ -1139,6 +1176,11 @@ mod tests {
         assert!(
             !fields.contains_key("gen_ai.prompt.version"),
             "prompt version should be omitted from the span when the request doesn't set one"
+        );
+        assert!(
+            !fields.contains_key("gen_ai.request.temperature")
+                && !fields.contains_key("gen_ai.request.max_tokens"),
+            "sampling controls should be omitted from the span when the request doesn't set them"
         );
     }
 }

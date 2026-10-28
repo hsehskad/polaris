@@ -57,6 +57,8 @@ pub struct LlmRequestBuilder<'a, S = Empty> {
     messages: Vec<Message>,
     tool_choice: Option<ToolChoice>,
     cache: CacheControl,
+    temperature: Option<f32>,
+    max_tokens: Option<u32>,
     _state: PhantomData<S>,
 }
 
@@ -177,6 +179,37 @@ impl<'a, S> LlmRequestBuilder<'a, S> {
         self.cache.breakpoints = indices.into_iter().collect();
         self
     }
+
+    /// Sets the sampling temperature for this request.
+    ///
+    /// Leave unset to use the provider's default. See
+    /// [`LlmRequest::temperature`] for how providers map it.
+    #[must_use]
+    pub fn temperature(mut self, temperature: f32) -> Self {
+        self.temperature = Some(temperature);
+        self
+    }
+
+    /// Sets the maximum number of tokens the model may generate.
+    ///
+    /// Leave unset to use the provider's default. See
+    /// [`LlmRequest::max_tokens`].
+    #[must_use]
+    pub fn max_tokens(mut self, max_tokens: u32) -> Self {
+        self.max_tokens = Some(max_tokens);
+        self
+    }
+
+    /// Applies optional sampling overrides in one call.
+    ///
+    /// Convenient when the values come from configuration: `None` keeps the
+    /// provider default for that knob.
+    #[must_use]
+    pub fn sampling(mut self, temperature: Option<f32>, max_tokens: Option<u32>) -> Self {
+        self.temperature = temperature;
+        self.max_tokens = max_tokens;
+        self
+    }
 }
 
 // ─────────────────────
@@ -195,6 +228,8 @@ impl<'a, S> LlmRequestBuilder<'a, S> {
             messages: self.messages,
             tool_choice: self.tool_choice,
             cache: self.cache,
+            temperature: self.temperature,
+            max_tokens: self.max_tokens,
             _state: PhantomData,
         }
     }
@@ -248,6 +283,8 @@ impl<'a> LlmRequestBuilder<'a, Ready> {
             tool_choice: self.tool_choice,
             output_schema: None,
             cache: self.cache,
+            temperature: self.temperature,
+            max_tokens: self.max_tokens,
         };
 
         (self.llm, request)
@@ -308,6 +345,8 @@ impl<'a> LlmRequestBuilder<'a, Empty> {
             messages: Vec::new(),
             tool_choice: None,
             cache: CacheControl::default(),
+            temperature: None,
+            max_tokens: None,
             _state: PhantomData,
         }
     }
@@ -704,6 +743,8 @@ mod tests {
             tool_choice: None,
             output_schema: None,
             cache: CacheControl::default(),
+            temperature: None,
+            max_tokens: None,
         };
         let stream = llm.stream(request).await.unwrap();
         let response = stream.collect_response().await.unwrap();

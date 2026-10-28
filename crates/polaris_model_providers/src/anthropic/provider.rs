@@ -368,12 +368,12 @@ fn convert_request(
 
     Ok(CreateMessageRequest {
         model: model.to_string(),
-        max_tokens: DEFAULT_MAX_TOKENS,
+        max_tokens: request.max_tokens.unwrap_or(DEFAULT_MAX_TOKENS),
         messages,
         system,
         tools,
         tool_choice,
-        temperature: None,
+        temperature: request.temperature,
         stop_sequences: None,
         output_format,
         stream: None,
@@ -1024,6 +1024,34 @@ mod tests {
     /// The JSON the wire request serializes to.
     fn request_json(request: &LlmRequest) -> serde_json::Value {
         serde_json::to_value(convert_request("claude-sonnet-4-6", request).unwrap()).unwrap()
+    }
+
+    #[test]
+    fn sampling_controls_map_onto_the_wire_request() {
+        let request = LlmRequest {
+            messages: vec![Message::user("hi")],
+            temperature: Some(0.3),
+            max_tokens: Some(1234),
+            ..Default::default()
+        };
+        let json = request_json(&request);
+        assert_eq!(json["max_tokens"], 1234);
+        let temperature = json["temperature"].as_f64().expect("temperature is set");
+        assert!((temperature - 0.3).abs() < 1e-6);
+    }
+
+    #[test]
+    fn unset_sampling_controls_keep_the_defaults() {
+        let request = LlmRequest {
+            messages: vec![Message::user("hi")],
+            ..Default::default()
+        };
+        let json = request_json(&request);
+        assert_eq!(json["max_tokens"], DEFAULT_MAX_TOKENS);
+        assert!(
+            json.get("temperature")
+                .is_none_or(serde_json::Value::is_null)
+        );
     }
 
     #[test]

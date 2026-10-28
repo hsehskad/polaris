@@ -36,6 +36,22 @@ pub struct LlmRequest {
     /// provider that does not simply ignores them. Defaults to disabled.
     #[serde(default)]
     pub cache: CacheControl,
+    /// Sampling temperature, if the caller wants to override the provider default.
+    ///
+    /// Provider-agnostic: each provider maps it onto its native parameter
+    /// (`temperature` on Anthropic and `OpenAI`, `inferenceConfig.temperature` on
+    /// Bedrock Converse). `None` leaves the provider's default in place. Valid
+    /// ranges differ per provider and model; out-of-range values are rejected
+    /// by the provider, not here.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub temperature: Option<f32>,
+    /// Upper bound on the number of tokens the model may generate.
+    ///
+    /// `None` leaves the provider's default in place (Anthropic, which requires
+    /// the field, keeps its built-in default). A response cut off by this limit
+    /// reports [`StopReason::MaxOutputTokens`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_tokens: Option<u32>,
 }
 
 /// Declarative prompt-cache breakpoint markers for an [`LlmRequest`].

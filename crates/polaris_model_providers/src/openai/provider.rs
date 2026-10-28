@@ -172,6 +172,12 @@ fn convert_request(
     if let Some(text) = text {
         builder.text(text);
     }
+    if let Some(temperature) = request.temperature {
+        builder.temperature(temperature);
+    }
+    if let Some(max_tokens) = request.max_tokens {
+        builder.max_output_tokens(max_tokens);
+    }
 
     builder.build().map_err(|build_err| {
         GenerationError::InvalidRequest(format!("Failed to build CreateResponse: {build_err}"))
