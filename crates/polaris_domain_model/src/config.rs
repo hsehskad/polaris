@@ -357,7 +357,7 @@ mod tests {
 
     #[test]
     fn prototype_style_json_loads() {
-        // The shape of the original wm_harness configs (unknown keys such as
+        // The shape of the earlier prototype harness configs (unknown keys such as
         // `mode` are ignored).
         let config = HarnessConfig::from_json_str(
             r#"{"name": "baseline+guard", "model_id": "m", "system_prompt": "p",

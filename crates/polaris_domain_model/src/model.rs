@@ -88,10 +88,9 @@ pub enum PredictOutcome {
 
 /// A connection to a domain-model MCP server.
 ///
-/// A domain model (what the research literature calls a symbolic world model)
-/// is an executable model of how a system behaves: given an action and what
-/// the agent has observed, it predicts the response, whether it is a refusal,
-/// the rule behind it, and how confident it is. This client speaks the
+/// A domain model is an executable model of how a system behaves: given an
+/// action and what the agent has observed, it predicts the response, whether
+/// it is a refusal, the rule behind it, and how confident it is. This client speaks the
 /// contract's tools: `predict(tool, args, observations)` and `handbook()`.
 ///
 /// It is also inserted as a global resource by

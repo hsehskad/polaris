@@ -391,7 +391,7 @@ mod tests {
             "name": "model",
             "transport": "http",
             "url": "http://127.0.0.1:8770/mcp",
-            "bearer_token_env": "WM_TOKEN",
+            "bearer_token_env": "MODEL_TOKEN",
             "register_tools": false,
         }))
         .expect("valid config");
@@ -400,7 +400,7 @@ mod tests {
         assert_eq!(config.timeout_secs, 60);
         assert!(matches!(
             config.transport,
-            McpTransport::Http { ref bearer_token_env, .. } if bearer_token_env.as_deref() == Some("WM_TOKEN")
+            McpTransport::Http { ref bearer_token_env, .. } if bearer_token_env.as_deref() == Some("MODEL_TOKEN")
         ));
 
         let config: McpServerConfig = serde_json::from_value(serde_json::json!({

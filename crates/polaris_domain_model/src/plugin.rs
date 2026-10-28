@@ -77,9 +77,8 @@ impl Contract for DomainModel {
 /// on state-changing tools, a what-if tool, handbook injection, and a belief
 /// state built from observed tool results — all driven by a [`HarnessConfig`].
 ///
-/// A domain model (what the research literature calls a symbolic world model)
-/// predicts how the real system will respond to an action. This plugin puts
-/// it in front of the agent's tools:
+/// A domain model predicts how the real system will respond to an action.
+/// This plugin puts it in front of the agent's tools:
 ///
 /// - **Pre-flight guard.** In `ready()` the plugin decorates every tool in the
 ///   [`ToolRegistry`]. Before a guarded call runs, the decorator asks the
