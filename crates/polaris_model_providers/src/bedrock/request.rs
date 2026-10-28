@@ -207,14 +207,22 @@ pub fn build_tool_config(
 
 /// Converts a Polaris tool definition to a Bedrock tool specification.
 fn convert_tool_spec(tool: &polaris_llm::ToolDefinition) -> Result<bedrock::Tool, GenerationError> {
-    let normalized = normalize_schema_for_strict_mode(tool.parameters.clone());
-    let input_schema = json_to_document(&normalized);
+    // Honour the tool's declared strictness: strict tools get the normalised
+    // schema and constrained decoding; non-strict tools (e.g. ones taking an
+    // open-ended object) keep their schema as written, since strict mode's
+    // `additionalProperties: false` would forbid every key of an open object.
+    let schema = if tool.strict {
+        normalize_schema_for_strict_mode(tool.parameters.clone())
+    } else {
+        tool.parameters.clone()
+    };
+    let input_schema = json_to_document(&schema);
 
     let spec = bedrock::ToolSpecification::builder()
         .name(&tool.name)
         .description(&tool.description)
         .input_schema(bedrock::ToolInputSchema::Json(input_schema))
-        .strict(true)
+        .strict(tool.strict)
         .build()
         .map_err(|err| {
             GenerationError::InvalidRequest(format!("failed to build tool specification: {err}"))
@@ -334,6 +342,48 @@ pub fn build_inference_config(
             .set_max_tokens(max_tokens)
             .build(),
     ))
+}
+
+#[cfg(test)]
+mod tool_spec_tests {
+    use super::*;
+    use serde_json::json;
+
+    fn open_object_tool(strict: bool) -> polaris_llm::ToolDefinition {
+        let mut def = polaris_llm::ToolDefinition::new(
+            "simulate",
+            "Takes an open-ended object.",
+            json!({"type": "object", "properties": {"args": {"type": "object"}}}),
+        );
+        def.strict = strict;
+        def
+    }
+
+    #[test]
+    fn strict_tools_are_sent_strict() {
+        let bedrock::Tool::ToolSpec(spec) = convert_tool_spec(&open_object_tool(true)).unwrap()
+        else {
+            panic!("expected a tool spec")
+        };
+        assert_eq!(spec.strict(), Some(true));
+    }
+
+    #[test]
+    fn non_strict_tools_keep_open_objects() {
+        let bedrock::Tool::ToolSpec(spec) = convert_tool_spec(&open_object_tool(false)).unwrap()
+        else {
+            panic!("expected a tool spec")
+        };
+        assert_eq!(spec.strict(), Some(false));
+        let Some(bedrock::ToolInputSchema::Json(doc)) = spec.input_schema() else {
+            panic!("expected a JSON schema")
+        };
+        let rendered = format!("{doc:?}");
+        assert!(
+            !rendered.contains("additionalProperties"),
+            "non-strict schemas are not normalised: {rendered}"
+        );
+    }
 }
 
 #[cfg(test)]
