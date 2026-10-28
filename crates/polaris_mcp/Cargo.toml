@@ -1,0 +1,48 @@
+[package]
+name = "polaris_mcp"
+version.workspace = true
+description = "Model Context Protocol (MCP) client plugin for Polaris agents"
+edition.workspace = true
+documentation = "https://docs.rs/polaris-ai"
+keywords = ["polaris-ai", "mcp", "tools", "agents", "llm"]
+categories = ["asynchronous", "development-tools"]
+license.workspace = true
+readme = "README.md"
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+polaris_system = { path = "../polaris_system", version = "0.6" }
+polaris_tools = { path = "../polaris_tools", version = "0.6" }
+polaris_models = { path = "../polaris_models", version = "0.6" }
+# The official Model Context Protocol Rust SDK (modelcontextprotocol/rust-sdk).
+# Client side only: stdio (child process) and streamable HTTP transports.
+rmcp = { version = "3.8", default-features = false, features = [
+    "client",
+    "transport-child-process",
+    "transport-streamable-http-client-reqwest",
+    "reqwest",
+] }
+http = "1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+tokio = { version = "1.43", features = ["process", "time", "io-util", "rt"] }
+tracing = "0.1"
+
+[dev-dependencies]
+axum = "0.8"
+rmcp = { version = "3.8", default-features = false, features = [
+    "client",
+    "server",
+    "transport-streamable-http-server",
+] }
+tokio = { version = "1.43", features = ["rt-multi-thread", "macros", "net", "io-util"] }
+tokio-util = "0.7"
+# Needed by integration tests under `cargo test --workspace --all-features`:
+# the unified feature resolution turns on `polaris_tools/dashboard`, which
+# makes `ToolsPlugin` require `AppPlugin`.
+polaris_app = { path = "../polaris_app", default-features = false }
