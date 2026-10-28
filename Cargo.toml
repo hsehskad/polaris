@@ -133,6 +133,12 @@ file-store = ["polaris_internal/file-store"]
 # files into `bindings/ts/src/` (the `@polaris/types` npm package).
 typegen = ["polaris_internal/typegen"]
 dashboard = ["polaris_internal/dashboard"]
+# MCP client plugin: connect to Model Context Protocol servers (stdio or
+# streamable HTTP) and register their tools in the `ToolRegistry`.
+mcp = ["polaris_internal/mcp"]
+# Domain-model harness building blocks (pre-flight guard, what-if tool,
+# handbook injection, belief state, file-based harness config). Implies `mcp`.
+domain-model = ["polaris_internal/domain-model"]
 
 [dependencies]
 polaris_internal = { path = "crates/polaris_internal", version = "0.6", default-features = false }

@@ -92,6 +92,25 @@ Shell command execution.
 |----------|-------|-------------------------|
 | [`ShellExecutor`](crate::shell::ShellExecutor) | Global | Execute shell commands behind the [`ShellPermission`](crate::shell::ShellPermission) gate. Provided by [`ShellPlugin`](crate::shell::ShellPlugin). |
 
+# Layer 3 — MCP *(feature `mcp`)*
+
+Model Context Protocol connections.
+
+| Resource | Scope | What systems use it for |
+|----------|-------|-------------------------|
+| [`McpClients`](crate::mcp::McpClients) | Global | Call MCP servers directly (including `connect_only` servers whose tools the model does not see) and map registry tool names to remote names. Provided by [`McpPlugin`](crate::mcp::McpPlugin). |
+
+# Layer 3 — Domain Model *(feature `domain-model`)*
+
+Domain-model harness state. All provided by [`DomainModelPlugin`](crate::domain_model::DomainModelPlugin).
+
+| Resource | Scope | What systems use it for |
+|----------|-------|-------------------------|
+| [`DomainModel`](crate::domain_model::DomainModel) | Global | Ask the domain model directly (`predict`, `handbook`). |
+| [`HarnessConfig`](crate::domain_model::HarnessConfig) | Global | Read the harness knobs: system prompt, model id, temperature, max tokens, step budget, guard and what-if settings. |
+| [`Handbook`](crate::domain_model::Handbook) | Global | The resolved handbook text to append to the system prompt ([`HarnessConfig::system_text`](crate::domain_model::HarnessConfig::system_text)). |
+| [`BeliefState`](crate::domain_model::BeliefState) | Local | What the agent has observed this session; pass a clone in the [`ToolContext`](crate::tools::ToolContext) so the guard can read and extend it. |
+
 # Related
 
 - [Resources reference](https://docs.rs/polaris-ai/latest/polaris_ai/system/resource/) — the trait, the two scopes, and the documentation standard

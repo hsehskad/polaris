@@ -54,6 +54,8 @@ See `docs/taxonomy.md` for the full layered architecture (Layer 1: System Framew
 - `crates/polaris_tools` - Layer 3: Tool definitions and registry
 - `crates/polaris_shell` - Layer 3: Shell command execution with permission model
 - `crates/polaris_app` - Layer 3: Shared HTTP server runtime (axum, AppPlugin, HttpRouter)
+- `crates/polaris_mcp` - Layer 3: MCP client plugin (stdio / streamable HTTP via `rmcp`; feature `mcp`)
+- `crates/polaris_domain_model` - Layer 3: Domain-model harness building blocks (pre-flight guard, what-if tool, handbook, belief state, `HarnessConfig`; feature `domain-model`)
 - `examples/` - Example agents and applications
 
 ## Linting Configuration
@@ -153,6 +155,8 @@ These map high-level goals to the files and patterns needed:
 | **Capture system parameter values for observability** | `#[system(inspect(a, b, return))]` selects at compile time; `InspectionPlugin` delivers - enable via `InspectionAPI`, listen via `Extends<InspectionSinkRegistry>`; per-deployment start policy via `InspectionPlugin::with_policy_from_env` (app-named env var; unset stays off) | `polaris_core_plugins/src/inspection.rs`, `polaris_system/src/param/inspect.rs` | [System - Parameter Inspection](docs/reference/system.md#parameter-inspection) |
 | **Keep credentials out of captured values and telemetry export** | `RedactionRules` rules by binding name or type (covered values arrive `Redacted`, `Debug` never run) - `InspectionPlugin::with_redactions` at build (or `with_redactions_from_env` — adds, never drops), `InspectionAPI::add_redacted_param` / `add_redacted_type` at run time; `disable_listener(INSPECTION_TRACING_LISTENER)` cuts export alone | `polaris_core_plugins/src/inspection.rs` | [System - Parameter Inspection](docs/reference/system.md#parameter-inspection) |
 | **Chain an inspection sink onto one already installed** | `ctx.inspection_arc()` -> wrap -> `ctx.replace_inspection(wrapper)`; guard re-application with `Arc::ptr_eq` on the handle you installed | `polaris_system/src/param/mod.rs` | [Execution Context - Chaining onto an Installed Sink](docs/reference/context.md#chaining-onto-an-installed-sink) |
+| **Use tools from MCP servers** | `McpPlugin::connect([McpServerConfig::stdio(..) / ::http(..)]).await` before `add_plugins`; tools register as `server__tool`; `McpClients` for direct calls (feature `mcp`) | `polaris_mcp/src/plugin.rs`, `polaris_mcp/src/client.rs` | `src/docs/mcp.md` |
+| **Guard state-changing tools with a domain model** | `DomainModelPlugin::connect(server, HarnessConfig::from_path(..)?)`; execute tools with `ToolContext::new().with(belief.clone())` from `Res<BeliefState>` (feature `domain-model`) | `polaris_domain_model/src/plugin.rs`, `polaris_domain_model/src/guard.rs` | `src/docs/domain_model.md` |
 | **Schedule plugin updates** | `tick_schedules()` + `update()` + `server.tick::<S>()` | `polaris_system/src/server.rs` | [Scheduling](docs/reference/scheduling.md) |
 
 ## Quick Reference: Common Modifications
@@ -244,7 +248,7 @@ When planning and implementing new features, refer to `docs/philosophy.md` and `
 |-------|--------|------|
 | **1 - System Framework** | `polaris_system`, `system_macros` | Own dedicated ticket. Changes affect everything. |
 | **2 - Graph Execution** | `polaris_graph`, `polaris_agent` | Own dedicated ticket. Changes affect all agents. |
-| **3 - Plugins** | `polaris_core_plugins`, `polaris_models`, `polaris_model_providers`, `polaris_tools`, `polaris_shell`, `polaris_app` | Must not modify Layer 1 or 2. Isolated changes. |
+| **3 - Plugins** | `polaris_core_plugins`, `polaris_models`, `polaris_model_providers`, `polaris_tools`, `polaris_shell`, `polaris_app`, `polaris_mcp`, `polaris_domain_model` | Must not modify Layer 1 or 2. Isolated changes. |
 
 Re-export crates (`polaris`, `polaris_internal`) are updated in the same ticket as the change they re-export. Tickets should touch 1 crate only (2 acceptable for wide-scale refactors).
 

@@ -112,6 +112,22 @@ Shell command execution behind the project permission model.
 |--------|-----------------|
 | [`ShellPlugin`](crate::shell::ShellPlugin) | A configured [`ShellExecutor`](crate::shell::ShellExecutor) resource and shell-execution tools, gated by [`ShellPermission`](crate::shell::ShellPermission). |
 
+## Layer 3 — MCP *(feature `mcp`)*
+
+Model Context Protocol client support.
+
+| Plugin | What it enables |
+|--------|-----------------|
+| [`McpPlugin`](crate::mcp::McpPlugin) | Connects to MCP servers (stdio or streamable HTTP with an optional bearer token), registers their tools in [`ToolRegistry`](crate::tools::ToolRegistry) as `server__tool`, and provides the [`McpClients`](crate::mcp::McpClients) resource. |
+
+## Layer 3 — Domain Model *(feature `domain-model`)*
+
+Harness building blocks over a domain-model MCP server.
+
+| Plugin | What it enables |
+|--------|-----------------|
+| [`DomainModelPlugin`](crate::domain_model::DomainModelPlugin) | A pre-flight guard that blocks confident predicted refusals of state-changing tools, the `simulate_action` what-if tool, handbook injection, a per-context [`BeliefState`](crate::domain_model::BeliefState), and the file-based [`HarnessConfig`](crate::domain_model::HarnessConfig). |
+
 ## Layer 3 — Dashboard
 
 The umbrella `dashboard` feature extends Layer-3 plugins with HTTP surfaces

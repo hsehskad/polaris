@@ -50,6 +50,14 @@ pub use polaris_shell;
 /// HTTP server runtime.
 pub use polaris_app;
 
+/// Model Context Protocol client support.
+#[cfg(feature = "mcp")]
+pub use polaris_mcp;
+
+/// Domain-model harness building blocks.
+#[cfg(feature = "domain-model")]
+pub use polaris_domain_model;
+
 /// Re-export all common types for easy access.
 ///
 /// # Examples
@@ -113,4 +121,18 @@ pub mod shell {
 /// Re-export all app-related types for easy access.
 pub mod app {
     pub use polaris_app::*;
+}
+
+/// Re-export all MCP client types for easy access.
+#[cfg(feature = "mcp")]
+#[cfg_attr(docsrs_dep, doc(cfg(feature = "mcp")))]
+pub mod mcp {
+    pub use polaris_mcp::*;
+}
+
+/// Re-export all domain-model harness types for easy access.
+#[cfg(feature = "domain-model")]
+#[cfg_attr(docsrs_dep, doc(cfg(feature = "domain-model")))]
+pub mod domain_model {
+    pub use polaris_domain_model::*;
 }

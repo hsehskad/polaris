@@ -271,6 +271,13 @@
 //! |---------|---------------|--------|
 //! | `tiktoken` | [`models::tokenizer::TiktokenCounter`] and [`models::tokenizer::EncodingFamily`] | Enables tiktoken-backed counting and [`models::TokenizerPlugin::default`] |
 //!
+//! ## Tools and Harness
+//!
+//! | Feature | Exported item | Find it under |
+//! |---------|---------------|---------------|
+//! | `mcp` | [`mcp::McpPlugin`], [`mcp::McpClient`] | [`mcp`] |
+//! | `domain-model` | [`domain_model::DomainModelPlugin`], [`domain_model::HarnessConfig`] (implies `mcp`) | [`domain_model`] |
+//!
 //! ## Sessions
 //!
 //! | Feature | Exported item | Find it under |
@@ -298,6 +305,8 @@
 //! | `tiktoken` | [`models::tokenizer::TiktokenCounter`], [`models::tokenizer::EncodingFamily`] | Adds [`Default`] for [`models::TokenizerPlugin`] and changes what [`models::TokenizerPlugin::default`] builds | [`models::TokenizerPlugin::default`] registers a global [`models::Tokenizer`] backed by [`models::tokenizer::TiktokenCounter`] |
 //! | `sessions-http` | [`sessions::http`], [`sessions::HttpPlugin`], [`sessions::http::models`] | Adds request/response model types and HTTP-facing session APIs under [`sessions`] | [`sessions::HttpPlugin`] registers routes through [`app::HttpRouter`] and depends on [`app::AppPlugin`] + [`sessions::SessionsPlugin`] |
 //! | `file-store` *(default)* | [`sessions::FileStore`] | Pulls `tokio/fs` into the dep graph | Lets [`sessions::SessionsPlugin`] use a filesystem-backed [`sessions::SessionStore`] |
+//! | `mcp` | [`mcp`] ([`mcp::McpPlugin`], [`mcp::McpClient`], [`mcp::McpServerConfig`]) | Pulls the `rmcp` SDK (client, child-process and streamable HTTP transports) into the dep graph | [`mcp::McpPlugin`] registers MCP server tools in [`tools::ToolRegistry`] and inserts [`mcp::McpClients`] |
+//! | `domain-model` | [`domain_model`] ([`domain_model::DomainModelPlugin`], [`domain_model::HarnessConfig`], [`domain_model::BeliefState`]) | Implies `mcp` | [`domain_model::DomainModelPlugin`] decorates [`tools::ToolRegistry`] with the pre-flight guard and belief recording, and can register the `simulate_action` tool |
 //! | `dashboard` | [`tools::dashboard::ToolsSnapshot`], [`models::dashboard::ModelsSnapshot`] | Activates the per-crate `dashboard` features on [`tools::ToolsPlugin`] and [`models::ModelsPlugin`] so each host plugin mounts its dashboard HTTP surface | [`tools::ToolsPlugin`] mounts a frozen-snapshot `/v1/tools` endpoint, and [`models::ModelsPlugin`] mounts `/v1/models/providers` |
 //! | `typegen` | None at runtime | Enables `ts-rs` derives on canonical session wire types (`SessionMetadata`, `SessionStatus`, …) | Running `cargo test --features typegen` regenerates the TypeScript bindings under `bindings/ts/src/` |
 //! | `test-utils` | [`plugins::MockClock`], [`plugins::MockIOProvider`] | None at runtime | Provides mocks for downstream test suites that exercise [`plugins::TimePlugin`] / [`plugins::IOProvider`] |
@@ -378,6 +387,22 @@ pub mod shell {
 pub mod app {
     #[doc(inline)]
     pub use polaris_internal::app::*;
+}
+
+#[cfg(feature = "mcp")]
+#[cfg_attr(docsrs_dep, doc(cfg(feature = "mcp")))]
+#[doc = include_str!("docs/mcp.md")]
+pub mod mcp {
+    #[doc(inline)]
+    pub use polaris_internal::mcp::*;
+}
+
+#[cfg(feature = "domain-model")]
+#[cfg_attr(docsrs_dep, doc(cfg(feature = "domain-model")))]
+#[doc = include_str!("docs/domain_model.md")]
+pub mod domain_model {
+    #[doc(inline)]
+    pub use polaris_internal::domain_model::*;
 }
 
 #[doc = include_str!("docs/apis.md")]

@@ -40,6 +40,10 @@ typegen = ["polaris_sessions/typegen"]
 # Enables the dashboard HTTP surface (tools/models snapshots) across `polaris_tools` and `polaris_models`.
 # Pulls axum and `polaris_app` into the graph. `polaris_core_plugins/dashboard` forwards to the same
 # tools/models surface so the umbrella knob stays consistent across every plugin crate.
+# MCP client plugin (`polaris_mcp`), built on the official `rmcp` SDK.
+mcp = ["dep:polaris_mcp"]
+# Domain-model harness building blocks (`polaris_domain_model`); implies `mcp`.
+domain-model = ["mcp", "dep:polaris_domain_model"]
 dashboard = [
     "polaris_tools/dashboard",
     "polaris_models/dashboard",
@@ -57,6 +61,8 @@ polaris_core_plugins = { path = "../polaris_core_plugins", version = "0.6" }
 polaris_sessions = { path = "../polaris_sessions", version = "0.6", default-features = false }
 polaris_shell = { path = "../polaris_shell", version = "0.6" }
 polaris_app = { path = "../polaris_app", version = "0.6", default-features = false }
+polaris_mcp = { path = "../polaris_mcp", version = "0.6", optional = true }
+polaris_domain_model = { path = "../polaris_domain_model", version = "0.6", optional = true }
 
 [lints]
 workspace = true
