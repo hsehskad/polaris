@@ -141,8 +141,8 @@ async fn main() {
         .and_then(|p| p.parse().ok())
         .unwrap_or(3000);
 
-    let model_id = std::env::var("POLARIS_MODEL")
-        .unwrap_or_else(|_| "anthropic/claude-sonnet-5-5".to_owned());
+    let model_id =
+        std::env::var("POLARIS_MODEL").unwrap_or_else(|_| "anthropic/claude-sonnet-5-5".to_owned());
 
     // Build the agent registry for the info endpoint.
     // In a real app, this would be dynamic based on registered agents and their configs.

@@ -9,6 +9,13 @@ publish = false
 [features]
 default = []
 otel = ["polaris/otel", "polaris_app/otel"]
+# The domain-model agent example: MCP tools, the domain-model harness, Bedrock.
+domain-model = ["polaris/mcp", "polaris/domain-model", "polaris/bedrock"]
+
+[[bin]]
+name = "domain_model_agent"
+path = "src/bin/domain_model_agent.rs"
+required-features = ["domain-model"]
 
 [lints.rust]
 missing_docs = "allow"

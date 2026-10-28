@@ -187,8 +187,8 @@ async fn main() {
 
     let capture_content = args.iter().any(|a| a == "--capture-content");
 
-    let model_id = std::env::var("POLARIS_MODEL")
-        .unwrap_or_else(|_| "anthropic/claude-sonnet-5-5".to_owned());
+    let model_id =
+        std::env::var("POLARIS_MODEL").unwrap_or_else(|_| "anthropic/claude-sonnet-5-5".to_owned());
     let agent_config = AgentConfig::new(model_id);
 
     // Build server

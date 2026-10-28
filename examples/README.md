@@ -123,3 +123,36 @@ curl -X POST http://localhost:3000/v1/sessions/demo/turns \
 # Delete a session
 curl -X DELETE http://localhost:3000/v1/sessions/{id}
 ```
+
+---
+
+## Domain-Model Agent
+
+A tool-use agent behind a domain-model harness. Its tools come from an environment MCP server; a domain-model MCP server (a domain model is what the research literature calls a symbolic world model) checks state-changing calls before they run; and every harness knob lives in a config file. See the `domain_model` and `mcp` module docs of `polaris-ai`.
+
+### Features
+
+- **MCP tools** via `McpPlugin` (stdio `--env-command` or streamable HTTP `--env-url`)
+- **Pre-flight guard**: a guarded call that the domain model confidently predicts the real system would refuse is not sent; the agent is told why and that retrying unchanged will fail. All other calls run
+- **What-if tool** `simulate_action(tool, args)`
+- **Handbook injection** and a **belief state** built from observed tool results
+- **Harness config** (`examples/configs/domain_model_agent.json`): system prompt, handbook, tool descriptions, guard (on/off, guarded tools, confidence tags), what-if, max steps, model id, temperature, max tokens
+- **OTLP export** to any endpoint with `--otel`; guard decisions are `domain_model.preflight` spans
+
+### Running
+
+Requires Bedrock credentials from the default AWS chain and `AWS_REGION` (the sample config uses `aws.bedrock/global.anthropic.claude-haiku-5-5`). The environment server must expose the domain's tools over MCP, and the domain-model server must implement `predict(tool, args, observations)` (and `handbook()` if the config asks for it).
+
+```bash
+AWS_REGION=eu-west-2 cargo run -p examples --features domain-model,otel --bin domain_model_agent -- \
+    --config examples/configs/domain_model_agent.json \
+    --env-command "python -m worldmodel.env_mcp_server --backend real --admin" \
+    --env-cwd /path/to/environment \
+    --reset-tool reset_episode \
+    --domain-model-url http://127.0.0.1:8775/mcp \
+    --requests examples/configs/domain_model_requests.jsonl \
+    --out episodes.jsonl \
+    --otel http://127.0.0.1:4318/v1/traces
+```
+
+Each episode is one JSON line in `--out`: the tool calls (with `guard_blocked` per call), final text, model calls, tokens, stop reasons, and whether the step budget ran out. `--reset-tool` names an environment tool that resets its state between episodes; it is called directly and never shown to the model. Pass `--request "<instruction>"` instead of `--requests` for a single episode.
